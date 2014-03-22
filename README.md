@@ -61,13 +61,16 @@ Examples:
 
 ### Installation
 
-Telnet into your PVR, e.g.,
+If you have a `wget` or `curl` with HTTPS support installed on your PVR then telnet into your PVR and download `cleanup.py` directly, e.g.,
 
     $ telnet dm8000
+    $ wget https://raw.github.com/jbretsch/pvrutils/master/cleanup.py
 
-Download cleanup.py.
+Otherwise download `cleanup.py` first, upload it to your PVR, and telnet into your PVR afterwards e.g.
 
-    $ wget https://raw.githubusercontent.com/jbretsch/pvrutils/master/cleanup.py
+    $ wget https://raw.github.com/jbretsch/pvrutils/master/cleanup.py
+    $ ftp -u ftp://root@dm8000/ cleanup.py
+    $ telnet dm8000
 
 Make it executable.
 
