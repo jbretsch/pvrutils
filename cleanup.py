@@ -37,6 +37,11 @@ Otherwise the script cleans up DIRECTORY as follows:
      files to delete.
 
 The script does NOT delete any (sub) directories.
+
+Examples:
+  ./cleanup.py
+  ./cleanup.py -d /path/to/my/recordings
+  ./cleanup.py -d /path/to/my/recordings -s 12000
 '''.strip()
 
 
