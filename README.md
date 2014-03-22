@@ -17,10 +17,10 @@ only to find your PVR _not_ having recorded it because its hard drive was full.
 
 With `cleanup.py` this will never ever happen to you again.
 
-Just copy `cleanup.py` to your PVR and create a cronjob that runs it every night.
-`cleanup.py` will then delete your old recordings (starting with the oldest one)
-until there is again a configurable amount of free space available on your hard
-drive.
+Just copy `cleanup.py` to your PVR and create a cronjob that runs it every
+night.  `cleanup.py` will then delete your old recordings (starting with the
+oldest one) until there is again a configurable amount of free space available
+on your hard drive.
 
 ### Usage
 
@@ -61,12 +61,14 @@ Examples:
 
 ### Installation
 
-If you have a `wget` or `curl` with HTTPS support installed on your PVR then telnet into your PVR and download `cleanup.py` directly, e.g.,
+If you have a `wget` or `curl` with HTTPS support installed on your PVR then
+telnet into your PVR and download `cleanup.py` directly, e.g.,
 
     $ telnet dm8000
     $ wget https://raw.github.com/jbretsch/pvrutils/master/cleanup.py
 
-Otherwise download `cleanup.py` first, upload it to your PVR, and telnet into your PVR afterwards e.g.
+Otherwise download `cleanup.py` first, upload it to your PVR, and telnet into
+your PVR afterwards e.g.
 
     $ wget https://raw.github.com/jbretsch/pvrutils/master/cleanup.py
     $ ftp -u ftp://root@dm8000/ cleanup.py
@@ -77,15 +79,17 @@ Make it executable.
     $ chmod u+x cleanup.py
 
 Run `cleanup.py` manually to test it. You have to know where your recordings
-reside. (In Dreamboxes this is usually `/hdd/media/movie`). And you have to decide
-how much free space there should be available after each `cleanup.py` run. If you
-are happy with the defaults (recordings in `/hdd/media/movie` and at least 50GB
-available space), then you can run `cleanup.py` without any further options.
+reside. (In Dreamboxes this is usually `/hdd/media/movie`). And you have to
+decide how much free space there should be available after each `cleanup.py`
+run. If you are happy with the defaults (recordings in `/hdd/media/movie` and
+at least 50GB available space), then you can run `cleanup.py` without any
+further options.
 
     $ ./cleanup.py
 
-Otherwise use the `-d` or `-s` option to specify a different directory to clean up
-or a different desired amount of free space. See the usage above for details.
+Otherwise use the `-d` or `-s` option to specify a different directory to clean
+up or a different desired amount of free space. See the usage information above
+for details.
 
 Now create a cronjob to let `cleanup.py` run periodically. For example, call
 
@@ -95,8 +99,8 @@ and add the line
 
     0 3 * * * /home/root/cleanup.py
 
-to the file that opens if `cleanup.py` resides in `/home/root` and you want it to be
-run every night at 3 o'clock.
+to the file that opens if `cleanup.py` resides in `/home/root` and you want it
+to be run every night at 3 o'clock.
 
 See if your cron daemon actually runs by checking if
 
