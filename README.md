@@ -106,4 +106,11 @@ See if your cron daemon actually runs by checking if
 
     $ ps aux | grep cron | grep -v grep
 
-outputs anything. If not then find out how to start it and start it.
+outputs anything. If not then find out how to start it and start it. On a
+Dreambox you can run
+
+    $ update-rc.d busybox-cron defaults
+    $ /etc/init.d/busybox-cron start
+
+to start the cron daemon and make sure that it starts with every Dreambox
+start.
