@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-"""Cleans up a given directory until a given amount of free space is available
-   in this directory. See the usage method below for further details.
+"""Cleans up one or many given directories until a given amount of free space is
+available on the device of those directories. See the usage method below for
+further details.
 
    Copyright (c) 2014 Jan Bretschneider <jan@bretti.net>
    License: The MIT License (http://opensource.org/licenses/MIT)
@@ -12,43 +13,45 @@ def usage():
     """Prints the usage information of this script."""
 
     print '''
-Cleans up a given directory until a given amount of free space is available in
-this directory.
+Cleans up one or many given directories until a given amount of free space is
+available on the device of those directories. See the usage method below for
+further details.
 
-Usage: cleanup.py [OPTIONS]
+Usage: cleanup.py [OPTIONS] [DIRECTORY ...]
+
+You can specify one or many directories to clean up.  All those directories
+must be on the same device. Otherwise the script aborts. If you do not specify
+a directory then the default directory is used: /hdd/media/movie.
 
 Options:
   -h, --help          Show this help message.
 
-  -d DIRECTORY        Specifies the directory to clean up.
-                      The default is /hdd/media/movie.
-
   -s MIN_AVAIL_SPACE  Specifies the minimal amount of space in megabytes you
-                      wish to have available in DIRECTORY.
-                      The default is 51200 MB (50 GB).
+                      wish to have available on the device with the given
+                      directories. The default is 51200 MB (50 GB).
 
-If MIN_AVAIL_SPACE is already available in DIRECTORY then this script
-deletes nothing and exists with a corresponding message.
+If MIN_AVAIL_SPACE is already available on the device with the given directories
+then this script deletes nothing and exists with a corresponding message.
 
-Otherwise the script cleans up DIRECTORY as follows:
-  1. It recursively finds all files in the given directory.
+Otherwise the script cleans up the given directories as follows:
+  1. It recursively finds all files in the given directories.
   2. It deletes the oldest files (according to their modification time (mtime))
-     until MIN_AVAIL_SPACE is available in DIRECTORY or there are no more
-     files to delete.
+     until MIN_AVAIL_SPACE is available on the device with the given
+     directories or there are no more files to delete.
 
 The script does NOT delete any (sub) directories.
 
 Examples:
   ./cleanup.py
-  ./cleanup.py -d /path/to/my/recordings
-  ./cleanup.py -d /path/to/my/recordings -s 12000
+  ./cleanup.py /path/to/my/recordings
+  ./cleanup.py -s 12000 /path/to/my/recordings
+  ./cleanup.py -s 12000 /path/to/my/recordings /some/other/dir
 '''.strip()
 
 
 import sys
 import os
 import getopt
-
 
 class File:
     """A simple file class. A File has a path and a modification time. The
@@ -70,6 +73,15 @@ class File:
     def __repr__(self):
         """Print File('/tmp/foo', 1395506398) as ('/tmp/foo', 1395506398)."""
         return repr((self.path, self.mtime))
+
+    def __key(self):
+        return (self.path)
+
+    def __eq__(x, y):
+        return x.__key() == y.__key()
+
+    def __hash__(self):
+        return hash(self.__key())
 
 
 def process_dir(all_files, dirname, filenames):
@@ -93,23 +105,24 @@ def process_dir(all_files, dirname, filenames):
 
         mtime = os.path.getmtime(fullpath)
         file = File(fullpath, mtime)
-        all_files.append(file)
+        all_files.add(file)
 
 
-def find_files_sorted_by_mtime(directory):
-    """Recursively scans the given directory and returns a list of all found
+def find_files_sorted_by_mtime(directories):
+    """Recursively scans the given directories and returns a list of all found
        files.
 
        Parameters:
-         directory (string) - The directory to scan.
+         directories (string) - The directories to scan.
 
        Returns:
          A list of File objects. The list is sorted by the modification time
          (mtime) of the files with the oldest file at index 0. If no files were
          found the returned list is empty.
     """
-    files=[]
-    os.path.walk(directory, process_dir, files)
+    files=set()
+    for directory in directories:
+        os.path.walk(directory, process_dir, files)
     return sorted(files, key=lambda file: file.mtime)
     
 
@@ -124,37 +137,76 @@ def avail_space_in_mb(directory):
     return st.f_frsize*st.f_bavail/1024/1024
 
 
-def cleanup(path, min_avail_space):
-    """Cleans up the given path until there is at least the given minimal
+def cleanup(directories, min_avail_space):
+    """Cleans up the given directories until there is at least the given minimal
        amount of space available. The cleanup method is described at the top of
        this script.
        
        Parameters:
-         path (string)         - The directory that should be cleaned up.
+         directories (list of strings) - The directories that should be cleaned
+                                         up. Must have at least one element.
          min_avail_space (int) - The amount of free space in megabytes that
                                  should be available in the given directory.
     """
 
-    if avail_space_in_mb(path) >= min_avail_space:
-        print "There is enough space available: %d MB" % avail_space_in_mb(path)
+    if avail_space_in_mb(directories[0]) >= min_avail_space:
+        print "There is enough space available: %d MB" % \
+                avail_space_in_mb(directories[0])
         print "No cleanup necessary. Exiting."
         return
 
     # all_files contains a list of all Files in path.
-    all_files = find_files_sorted_by_mtime(path)
+    all_files = find_files_sorted_by_mtime(directories)
 
     # Delete the oldest file until there is enough space available.
-    while avail_space_in_mb(path) < min_avail_space and len(all_files) > 0:
+    while avail_space_in_mb(directories[0]) < min_avail_space and \
+          len(all_files) > 0:
         file = all_files.pop(0)
         print "Removing %s" % file.path
         os.remove(file.path)
-        print "Space now available: %d MB." % avail_space_in_mb(path)
+        print "Space now available: %d MB." % avail_space_in_mb(directories[0])
 
     # Report if there is not enough space available and no more file to delete.
-    if avail_space_in_mb(path) < min_avail_space and len(all_files) == 0:
+    if avail_space_in_mb(directories[0]) < min_avail_space and \
+       len(all_files) == 0:
         print "There is NOT enough space available: %d MB" % \
-              avail_space_in_mb(path)
+              avail_space_in_mb(directories[0])
         print "And there are no more files to delete."
+
+
+def check_directories(directories):
+    """Checks if all given directories are really directories and on the same
+       device. If not, abort.
+    """
+    ok_dirs = []
+    for d in directories:
+        if not os.path.exists(d):
+            print "'%s' does not exist. Ignoring." % d
+            continue
+
+        if not os.path.isdir(d):
+            print "'%s' is no directory. Ignoring." % d
+            continue
+
+        ok_dirs.append(d)
+
+    if len(ok_dirs) == 0:
+        print "No existing directory given. Exiting."
+        return False, []
+
+    prev_dir = None
+    prev_device = None
+    for d in ok_dirs:
+        current_device = os.stat(d).st_dev
+        if prev_device is not None and current_device != prev_device:
+            print "'%s' and '%s' are not on the same device. Exiting." % \
+                  (d, prev_dir)
+            return False, []
+
+        prev_dir = d
+        prev_device = current_device
+
+    return True, ok_dirs
 
 
 def parse_opts(directory, min_avail_space):
@@ -178,7 +230,7 @@ def parse_opts(directory, min_avail_space):
     # We use getopt to parse the command line arguments because argparse or
     # optparse are not available on Dreamboxes.
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hd:s:", ["help"])
+        opts, args = getopt.getopt(sys.argv[1:], "hs:", ["help"])
     except getopt.GetoptError as err:
         print str(err)
         usage()
@@ -188,8 +240,6 @@ def parse_opts(directory, min_avail_space):
         if opt in ('-h', '--help'):
             usage()
             sys.exit()
-        elif opt == '-d':
-            directory = arg
         elif opt == '-s':
             try:
                 min_avail_space = int(arg)
@@ -201,25 +251,54 @@ def parse_opts(directory, min_avail_space):
         else:
             assert False, "unhandled option"
 
-    print "You requested to have %d MB available in %s." % (min_avail_space,\
-                                                           directory)
-    return directory, min_avail_space
+    directories = args
+    if (len(directories) == 0):
+        directories = [directory]
+
+    print "You requested to have %d MB available in the following "\
+          "directories:" % min_avail_space
+    for dir in directories:
+        print dir
+
+    return directories, min_avail_space
 
 
 def main():
     """Main method of this script."""
 
     # Use the directory that contains recordings on Dreamboxes as default.
-    directory = '/media/hdd/movie'
+    default_directory = '/media/hdd/movie'
 
     # Per default we want to have 50GB of free space.
     min_avail_space = 50*1024
 
     # Override defaults with values given on the command line.
-    directory, min_avail_space = parse_opts(directory, min_avail_space)
+    directories, min_avail_space = parse_opts(default_directory, min_avail_space)
+
+    # Check if all given directories are really directories and on the same
+    # device. If not, abort.
+    ok, directories = check_directories(directories)
+    if not ok:
+        return 1
 
     # Do the actual cleanup.
-    cleanup(directory, min_avail_space)
+    cleanup(directories, min_avail_space)
+    return 0
+
+
+PROFILE = 0
 
 if __name__ == '__main__':
-    main()
+    if PROFILE:
+        import cProfile
+        import pstats
+        profile_filename = 'cleanup.cleanup_profile.txt'
+        cProfile.run('main()', profile_filename)
+        statsfile = open('profile_stats.txt', 'wb')
+        p = pstats.Stats(profile_filename, stream=statsfile)
+        stats = p.strip_dir().sort_stats('cumulative')
+        stats.print_stats()
+        statsfile.close()
+        sys.exit(0)
+
+    sys.exit(main())

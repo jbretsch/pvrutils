@@ -27,36 +27,39 @@ on your hard drive.
 Here is what `cleanup.py --help` says:
 
 ```
-Cleans up a given directory until a given amount of free space is available in
-this directory.
+Cleans up one or many given directories until a given amount of free space is
+available on the device of those directories. See the usage method below for
+further details.
 
-Usage: cleanup.py [OPTIONS]
+Usage: cleanup.py [OPTIONS] [DIRECTORY ...]
+
+You can specify one or many directories to clean up.  All those directories
+must be on the same device. Otherwise the script aborts. If you do not specify
+a directory then the default directory is used: /hdd/media/movie.
 
 Options:
   -h, --help          Show this help message.
 
-  -d DIRECTORY        Specifies the directory to clean up.
-                      The default is /hdd/media/movie.
-
   -s MIN_AVAIL_SPACE  Specifies the minimal amount of space in megabytes you
-                      wish to have available in DIRECTORY.
-                      The default is 51200 MB (50 GB).
+                      wish to have available on the device with the given
+                      directories. The default is 51200 MB (50 GB).
 
-If MIN_AVAIL_SPACE is already available in DIRECTORY then this script
-deletes nothing and exists with a corresponding message.
+If MIN_AVAIL_SPACE is already available on the device with the given directories
+then this script deletes nothing and exists with a corresponding message.
 
-Otherwise the script cleans up DIRECTORY as follows:
-  1. It recursively finds all files in the given directory.
+Otherwise the script cleans up the given directories as follows:
+  1. It recursively finds all files in the given directories.
   2. It deletes the oldest files (according to their modification time (mtime))
-     until MIN_AVAIL_SPACE is available in DIRECTORY or there are no more
-     files to delete.
+     until MIN_AVAIL_SPACE is available on the device with the given
+     directories or there are no more files to delete.
 
 The script does NOT delete any (sub) directories.
 
 Examples:
   ./cleanup.py
-  ./cleanup.py -d /path/to/my/recordings
-  ./cleanup.py -d /path/to/my/recordings -s 12000
+  ./cleanup.py /path/to/my/recordings
+  ./cleanup.py -s 12000 /path/to/my/recordings
+  ./cleanup.py -s 12000 /path/to/my/recordings /some/other/dir
 ```
 
 ### Installation
@@ -87,9 +90,9 @@ further options.
 
     $ ./cleanup.py
 
-Otherwise use the `-d` or `-s` option to specify a different directory to clean
-up or a different desired amount of free space. See the usage information above
-for details.
+Otherwise pass different directories to clean up on the command line or use the
+`-s` option to specify a different desired amount of free space. See the usage
+information above for details.
 
 Now create a cronjob to let `cleanup.py` run periodically. For example, call
 
