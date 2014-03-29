@@ -176,7 +176,18 @@ def cleanup(directories, min_avail_space):
 
 def check_directories(directories):
     """Checks if all given directories are really directories and on the same
-       device. If not, abort.
+       device.
+
+       Parameters:
+         directories (list of strings) - The directories to check.
+
+       Returns:
+         The tuple (ok, ok_dirs) where ok is a boolean and ok_dirs a list of
+         directories (as strings). If the given directories contained no
+         existing directories or it contained at least two directories that are
+         not on the same device, then ok is False and ok_dirs is empty.
+         Otherwise ok is True and ok_dirs contains all directories in the given
+         directories that really exist.
     """
     ok_dirs = []
     for d in directories:
