@@ -113,7 +113,7 @@ def find_files_sorted_by_mtime(directories):
        files.
 
        Parameters:
-         directories (string) - The directories to scan.
+         directories (list of strings) - The directories to scan.
 
        Returns:
          A list of File objects. The list is sorted by the modification time
