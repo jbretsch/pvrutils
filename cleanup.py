@@ -244,8 +244,8 @@ def parse_opts(directory, min_avail_space):
             try:
                 min_avail_space = int(arg)
             except ValueError as err:
-                print "You have given the option -d %s. " \
-                      "But '%s' is not a number." % (arg, arg)
+                print "You have given the option %s %s. " \
+                      "But '%s' is not a number." % (opt, arg, arg)
                 print "Run %s --help for help." % sys.argv[0]
                 sys.exit(1)
         else:
