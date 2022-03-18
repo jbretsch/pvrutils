@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 """Cleans up one or many given directories until a given amount of free space is
 available on the device of those directories. See the usage method below for
@@ -12,7 +12,7 @@ further details.
 def usage():
     """Prints the usage information of this script."""
 
-    print '''
+    print('''
 Cleans up one or many given directories until a given amount of free space is
 available on the device of those directories. See the usage method below for
 further details.
@@ -46,7 +46,7 @@ Examples:
   ./cleanup.py /path/to/my/recordings
   ./cleanup.py -s 12000 /path/to/my/recordings
   ./cleanup.py -s 12000 /path/to/my/recordings /some/other/dir
-'''.strip()
+'''.strip())
 
 
 import sys
@@ -55,15 +55,15 @@ import getopt
 
 class File:
     """A simple file class. A File has a path and a modification time. The
-    modification time is stored as seconds since the epoch. 
-       
+    modification time is stored as seconds since the epoch.
+
        Usage:
           >>> f = File('/tmp/foo', 1395506398)
           >>> f.path
           '/tmp/foo'
           >>> f.mtime
           1395506398
-    """ 
+    """
 
     def __init__(self, path, mtime):
         """Creates a File with the given path and modification time."""
@@ -122,9 +122,10 @@ def find_files_sorted_by_mtime(directories):
     """
     files=set()
     for directory in directories:
-        os.path.walk(directory, process_dir, files)
+        for dirpath, dirnames, filenames in os.walk(directory):
+            process_dir(files, dirpath, filenames)
     return sorted(files, key=lambda file: file.mtime)
-    
+
 
 def avail_space_in_mb(directory):
     """Returns the amount of megabytes that are free (available) in the given
@@ -132,7 +133,7 @@ def avail_space_in_mb(directory):
 
        Parameters:
          directory (string) - The directory to check.
-    """ 
+    """
     st = os.statvfs(directory)
     return st.f_frsize*st.f_bavail/1024/1024
 
@@ -141,7 +142,7 @@ def cleanup(directories, min_avail_space):
     """Cleans up the given directories until there is at least the given minimal
        amount of space available. The cleanup method is described at the top of
        this script.
-       
+
        Parameters:
          directories (list of strings) - The directories that should be cleaned
                                          up. Must have at least one element.
@@ -150,9 +151,9 @@ def cleanup(directories, min_avail_space):
     """
 
     if avail_space_in_mb(directories[0]) >= min_avail_space:
-        print "There is enough space available: %d MB" % \
-                avail_space_in_mb(directories[0])
-        print "No cleanup necessary. Exiting."
+        print("There is enough space available: %d MB" % \
+                avail_space_in_mb(directories[0]))
+        print("No cleanup necessary. Exiting.")
         return
 
     # all_files contains a list of all Files in path.
@@ -162,16 +163,16 @@ def cleanup(directories, min_avail_space):
     while avail_space_in_mb(directories[0]) < min_avail_space and \
           len(all_files) > 0:
         file = all_files.pop(0)
-        print "Removing %s" % file.path
+        print("Removing %s" % file.path)
         os.remove(file.path)
-        print "Space now available: %d MB." % avail_space_in_mb(directories[0])
+        print("Space now available: %d MB." % avail_space_in_mb(directories[0]))
 
     # Report if there is not enough space available and no more file to delete.
     if avail_space_in_mb(directories[0]) < min_avail_space and \
        len(all_files) == 0:
-        print "There is NOT enough space available: %d MB" % \
-              avail_space_in_mb(directories[0])
-        print "And there are no more files to delete."
+        print("There is NOT enough space available: %d MB" % \
+              avail_space_in_mb(directories[0]))
+        print("And there are no more files to delete.")
 
 
 def check_directories(directories):
@@ -192,17 +193,17 @@ def check_directories(directories):
     ok_dirs = []
     for d in directories:
         if not os.path.exists(d):
-            print "'%s' does not exist. Ignoring." % d
+            print("'%s' does not exist. Ignoring." % d)
             continue
 
         if not os.path.isdir(d):
-            print "'%s' is no directory. Ignoring." % d
+            print("'%s' is no directory. Ignoring." % d)
             continue
 
         ok_dirs.append(d)
 
     if len(ok_dirs) == 0:
-        print "No existing directory given. Exiting."
+        print("No existing directory given. Exiting.")
         return False, []
 
     prev_dir = None
@@ -210,8 +211,8 @@ def check_directories(directories):
     for d in ok_dirs:
         current_device = os.stat(d).st_dev
         if prev_device is not None and current_device != prev_device:
-            print "'%s' and '%s' are not on the same device. Exiting." % \
-                  (d, prev_dir)
+            print("'%s' and '%s' are not on the same device. Exiting." % \
+                  (d, prev_dir))
             return False, []
 
         prev_dir = d
@@ -243,7 +244,7 @@ def parse_opts(directory, min_avail_space):
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hs:", ["help"])
     except getopt.GetoptError as err:
-        print str(err)
+        print(str(err))
         usage()
         sys.exit(1)
 
@@ -255,9 +256,9 @@ def parse_opts(directory, min_avail_space):
             try:
                 min_avail_space = int(arg)
             except ValueError as err:
-                print "You have given the option %s %s. " \
-                      "But '%s' is not a number." % (opt, arg, arg)
-                print "Run %s --help for help." % sys.argv[0]
+                print("You have given the option %s %s. " \
+                      "But '%s' is not a number." % (opt, arg, arg))
+                print("Run %s --help for help." % sys.argv[0])
                 sys.exit(1)
         else:
             assert False, "unhandled option"
@@ -266,10 +267,10 @@ def parse_opts(directory, min_avail_space):
     if (len(directories) == 0):
         directories = [directory]
 
-    print "You requested to have %d MB available in the following "\
-          "directories:" % min_avail_space
+    print("You requested to have %d MB available in the following "\
+          "directories:" % min_avail_space)
     for dir in directories:
-        print dir
+        print(dir)
 
     return directories, min_avail_space
 
